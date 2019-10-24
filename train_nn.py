@@ -11,6 +11,8 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import backend as K
+from keras.utils import np_utils
+
 
 import os
 from PIL import ImageFile
@@ -26,10 +28,12 @@ img_width, img_height = 150,150
 
 train_data_dir = 'data/train'
 validation_data_dir = 'data/validation'
+test_data_dir='data/test/'
+
 nb_train_samples = 500 #this divided by the batch size will give the number of steps per epoch
-nb_validation_samples = 200
-epochs = 50
-batch_size = 16 #how many images to include before taking a gradient step
+nb_validation_samples = 300
+epochs = 5
+batch_size = 32 #how many images to include before taking a gradient step
 
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
@@ -60,7 +64,7 @@ model.add(Activation('sigmoid'))
 
 
 model.compile(loss='binary_crossentropy',
-              optimizer='rmsprop',
+              optimizer='adam', #rmsprop
               metrics=['accuracy'])
 
 # this is the augmentation configuration we will use for training
@@ -92,14 +96,16 @@ validation_generator = test_datagen.flow_from_directory(
     batch_size=batch_size,
     class_mode='binary')
 
+test_generator=test_datagen.flow_from_directory(test_data_dir, target_size=(img_width, img_height))
+
 
 #adjust the class weights to match the training samples
-#0 is hotdog, 1 is not hotdog
+#1 is hotdog, 1 is not hotdog
 
 #This makes the weight of assigning a hotdog 10 times higher as we have less training data
 #for hotdogs
 
-class_weight={0.0: 1.0, 1.0:1.0}
+class_weight={0.0:1.0, 1.0:1.0}
 
 
 
@@ -112,7 +118,10 @@ model.fit_generator(
     class_weight=class_weight)
 
 
+print("Test set: ", model.evaluate_generator(test_generator))
+
+
 model.save('first_try_2.h5')
-#os.system("tensorflowjs_converter --input_format keras first_try.h5 model/")
+os.system("tensorflowjs_converter --input_format keras first_try.h5 model/")
 
 #tfjs.converters.save_keras_model(model, "./model/")

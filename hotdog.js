@@ -21,7 +21,7 @@ async function main() {
             const prediction = model.predict(tensor);
 	    
             var data = prediction.dataSync();
-            document.getElementById('result').innerHTML = data[0] == 0 ? "Ruling: Hotdog" : "Ruling: NOT hotdog";
+            document.getElementById('result').innerHTML = data[0] == 0 ? "Ruling: Not Hotdog" : "Ruling: hotdog";
         }
         var fileReadComplete = function(ev2) {
             document.getElementById('image').src = ev2.target.result;
