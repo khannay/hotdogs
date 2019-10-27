@@ -15,13 +15,16 @@ async function main() {
                 await wait(100);
             }
 
-	 
-            var tensor = tf.browser.fromPixels(img).resizeNearestNeighbor([150,150]).toFloat().expandDims();
-	    //var tensor=model.detect(img);
+
+	    let offset=tf.scalar(127.5);
+            var tensor = tf.browser.fromPixels(img).resizeNearestNeighbor([224,224]).toFloat().sub(offset).div(offset).expandDims();
+
             const prediction = model.predict(tensor);
+
 	    
             var data = prediction.dataSync();
-            document.getElementById('result').innerHTML = data[0] == 0 ? "Ruling: Not Hotdog" : "Ruling: hotdog";
+	    //alert(data[0]);
+            document.getElementById('result').innerHTML = data[0] > 0.5 ? "Ruling: Not Hotdog" : "Ruling: Hotdog!";
         }
         var fileReadComplete = function(ev2) {
             document.getElementById('image').src = ev2.target.result;
