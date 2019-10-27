@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import os
+import os, sys
 import keras
 import matplotlib.pyplot as plt
 from keras.applications import MobileNet
@@ -15,30 +15,47 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense, GlobalAveragePooling2D
 from keras import backend as K
 
-import os
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
-# STEP 1 Build the Model-----------------------------------------------------------------------------------------------------------------
 
+#----------------------Parameters----------------------------------------
+
+#dimensions of our images.
+img_width, img_height = 224,224 #This matches the MobileNet input size
+
+train_data_dir = '../data/train'
+validation_data_dir = '../data/validation'
+nb_train_samples = 800 #this divided by the batch size will give the number of steps per epoch
+nb_validation_samples = 100
+epochs = 10
+batch_size = 32 #how many images to include before taking a gradient step
+
+if K.image_data_format() == 'channels_first':
+    input_shape = (3, img_width, img_height)
+else:
+    input_shape = (img_width, img_height, 3)
+
+
+
+# STEP 1 Build the Model-----------------------------------------------------------------------------------------------------------------
 
 
 base_model=MobileNet(weights='imagenet',include_top=False) #imports the mobilenet model and discards the last 1000 neuron layer.
 
 x=base_model.output
 x=GlobalAveragePooling2D()(x)
-x=Dense(512,activation='relu')(x) #we add dense layers so that the model can learn more complex functions and classify for better results.
-#x=Dense(1024,activation='relu')(x) #dense layer 2
-#x=Dense(32,activation='relu')(x) #dense layer 3
+x=Dense(1024,activation='relu')(x) #we add dense layers so that the model can learn more
+x=Dropout(0.5)(x)
+x=Dense(64,activation='relu')(x)
+x=Dropout(0.25)(x)
 preds=Dense(1, activation='sigmoid')(x)
 #preds=Dense(2,activation='softmax')(x) #final layer with softmax activation
 
 
 model=Model(inputs=base_model.input,outputs=preds)
-#specify the inputs
-#specify the outputs
-#now a model has been created based on our architecture
+
 
 #Check model
 for i,layer in enumerate(model.layers):
@@ -48,8 +65,9 @@ for i,layer in enumerate(model.layers):
 #Set the allowed trainable models
 for layer in model.layers:
     layer.trainable=False
-# or if we want to set the first 30 layers of the network to be non-trainable
 
+
+# or if we want to set the first X layers of the network to be non-trainable
 for layer in model.layers[:80]:
     layer.trainable=False
 for layer in model.layers[80:]:
@@ -59,23 +77,6 @@ for layer in model.layers[80:]:
 
 #-----------STEP 2 LOAD the training data-------------------------------------
 
-
-#From non transfer learning directory
-
-#dimensions of our images.
-img_width, img_height = 150,150 #224
-
-train_data_dir = '../data/train'
-validation_data_dir = '../data/validation'
-nb_train_samples = 600 #this divided by the batch size will give the number of steps per epoch
-nb_validation_samples = 100
-epochs = 5
-batch_size = 32 #how many images to include before taking a gradient step
-
-if K.image_data_format() == 'channels_first':
-    input_shape = (3, img_width, img_height)
-else:
-    input_shape = (img_width, img_height, 3)
 
 
 test_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)

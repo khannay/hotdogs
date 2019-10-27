@@ -26,21 +26,25 @@ total=0
 
 def predict_filename(fn):
 
-    
-    img = cv2.imread(fn)
-    img = cv2.resize(img,(150,150))
-    img = np.reshape(img,[1,150,150,3])
-    img=preprocess_input(img)
+    try:
+        img = cv2.imread(fn)
+        img = cv2.resize(img,(224,224))
+        img = np.reshape(img,[1,224,224,3])
+        img=preprocess_input(img)
         
-    classes = model.predict(img)[0]
-    #print("Class: ", classes[0])
+        classes = model.predict(img)[0]
+        #print("Class: ", classes[0])
     
     
-    if classes<=0.50:
+        if classes<=0.50:
     
-        return(classes[0], "Hotdog")
-    else:
-        return(classes[0], "Not Hotdog")
+            return(classes[0], "Hotdog")
+        else:
+            return(classes[0], "Not Hotdog")
+
+    except:
+        print("Error with img", fn)
+        return(0.0, "Error")
 
 
 

@@ -16,6 +16,7 @@ import os
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+import numpy as np
 
 
 
@@ -60,7 +61,59 @@ model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 
-model.compile(loss='binary_crossentropy',
+
+
+
+def compute_binary_specificity(y_pred, y_true):
+    """Compute the confusion matrix for a set of predictions.
+
+    Parameters
+    ----------
+    y_pred   : predicted values for a batch if samples (must be binary: 0 or 1)
+    y_true   : correct values for the set of samples used (must be binary: 0 or 1)
+
+    Returns
+    -------
+    out : the specificity
+    """
+
+    #check_binary(K.eval(y_true))    # must check that input values are 0 or 1
+    #check_binary(K.eval(y_pred))    # 
+
+    TN = np.logical_and(K.eval(y_true) == 0, K.eval(y_pred) == 0)
+    FP = np.logical_and(K.eval(y_true) == 0, K.eval(y_pred) == 1)
+
+    # as Keras Tensors
+    TN = K.sum(K.variable(TN))
+    FP = K.sum(K.variable(FP))
+
+    specificity = TN / (TN + FP + K.epsilon())
+    return specificity
+
+
+def specificity_loss_wrapper():
+    """A wrapper to create and return a function which computes the specificity loss, as (1 - specificity)
+
+    """
+    # Define the function for your loss
+    def specificity_loss(y_true, y_pred):
+        return 1.0 - compute_binary_specificity(y_true, y_pred)
+
+    return specificity_loss    # we return this function object
+
+spec_loss = specificity_loss_wrapper()
+
+#binary_crossentropy
+
+
+
+
+
+
+
+
+
+model.compile(loss=spec_loss,
               optimizer='adam',
               metrics=['accuracy'])
 
@@ -101,6 +154,11 @@ validation_generator = test_datagen.flow_from_directory(
 #for hotdogs
 
 class_weight={0.0: 1.0, 1.0:1.0}
+
+
+
+
+
 
 
 
